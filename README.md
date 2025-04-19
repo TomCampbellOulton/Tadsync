@@ -26,6 +26,10 @@ Auto updates have been disabled due to the updates not working with the field fo
 5. Paste in your new paths (replace the old paths)
 6. Close and restart your macro
 
+-- Pinetree pattern (Miku-Tideshift included) --
+1. Paste following settings onto macro
+{"Name":"Pine Tree","Pattern":"Miku-TideShift","DriftCheck":0,"PatternInvertFB":0,"PatternInvertLR":0,"PatternReps":5,"PatternShift":1,"PatternSize":"M","ReturnType":"Walk","RotateDirection":"Left","RotateTimes":4,"SprinklerDist":7,"SprinklerLoc":"Upper Left","UntilMins":10,"UntilPack":95}
+
 -- Credits: --
 Natro Macro:
 https://github.com/NatroTeam/NatroMacro
