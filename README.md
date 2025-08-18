@@ -1,3 +1,5 @@
+*** If character is constantly resetting, pause the macro and close roblox, then resume/ start the macro and it should work. Working on a fix ***
+
 Tadsync is an updated version of Natro Alt Synchronization by @aqts-aqts to allow new patterns and paths to be used in addition to the ability to disable Mondo looting.
 Auto updates have been disabled due to the updates not working with the field following mechanic.
 -- Works for paths requiring Natro Macro versions 1.0.0.3 and 1.0.1 --
