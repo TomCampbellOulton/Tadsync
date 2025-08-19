@@ -837,16 +837,6 @@ nm_importConfig()
 		, "TimerX", 150
 		, "TimerY", 150
 		, "TimersOpen", 0)
-        
-	config["Extensions"] := Map("FollowingLeader", 0
-		, "FollowingField", ""
-		, "FollowingStartTime", 0
-		, "LastAnnouncedField", ""
-		, "FieldFollowingCheck", 0
-		, "FieldFollowingFollowMode", ""
-		, "FieldFollowingMaxTime", ""
-		, "FieldFollowingChannelID", ""
-		, "PFieldBoosted", 0)
 
 	local k, v, i, j
 	for k,v in config ; load the default values as globals, will be overwritten if a new value exists when reading
@@ -2029,7 +2019,6 @@ Run
 '"' DeathSSCheck '" "' PlanterSSCheck '" "' HoneySSCheck '" "' criticalCheck '" "' discordUID '" "' CriticalErrorPingCheck '" "' DisconnectPingCheck '" "' GameFrozenPingCheck '" '
 '"' PhantomPingCheck '" "' UnexpectedDeathPingCheck '" "' EmergencyBalloonPingCheck '" "' commandPrefix '" "' NightAnnouncementCheck '" "' NightAnnouncementName '" '
 '"' NightAnnouncementPingID '" "' NightAnnouncementWebhook '" "' PrivServer '" "' DebugLogEnabled '" "' MonsterRespawnTime '" "' HoneyUpdateSSCheck '"'
-'"' FieldFollowingCheck '" "' FieldFollowingFollowMode '" "' FieldFollowingMaxTime '" "' FieldFollowingChannelID '"'
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8478,100 +8467,6 @@ nm_NightAnnouncementHelp(*){
 	This is the channel where messages will be sent and people with access to the channel will be informed that it is nighttime in your server.
 	)", "Announce Night Detection", 0x40000
 }
-aq_FieldFollowingGUI(*){
-	global
-	global FieldFollowingFollowMode
-	GuiClose(*){
-		if (IsSet(FieldFollowingGUI) && IsObject(FieldFollowingGUI))
-			FieldFollowingGUI.Destroy(), FieldFollowingGUI := ""
-	}
-	GuiClose()
-	FieldFollowingGUI := Gui("+AlwaysOnTop +Border", "Field Following")
-	FieldFollowingGUI.OnEvent("Close", GuiClose)
-	FieldFollowingGUI.SetFont("s8 cDefault Bold", "Tahoma")
-	FieldFollowingGUI.Add("GroupBox", "x5 y2 w290 h65", "Settings")
-	FieldFollowingGUI.Add("CheckBox", "x73 y2 vFieldFollowingCheck Checked" FieldFollowingCheck, "Enabled").OnEvent("Click", aq_FieldFollowingCheck)
-	FieldFollowingGUI.SetFont("Norm")
-	FieldFollowingGUI.Add("Button", "x150 y1 w135 h16", "What does this do?").OnEvent("Click", aq_FieldFollowingHelp)
-	FieldFollowingGUI.Add("Text", "x15 y23", "Follow Mode:")
-	(GuiCtrl := FieldFollowingGUI.Add("DropDownList", "x80 y19 w65 vFieldFollowingFollowMode Disabled" (FieldFollowingCheck = 0), ["Leader", "Follower"])).Text := FieldFollowingFollowMode, GuiCtrl.OnEvent("Change", aq_FieldFollowingFollowModeSelect)
-	FieldFollowingGUI.Add("Text", "x150 y23", "Max Time:")
-	FieldFollowingGUI.Add("Edit", "x200 y21 w80 h18 vFieldFollowingMaxTime Disabled" (FieldFollowingCheck = 0), FieldFollowingMaxTime).OnEvent("Change", aq_saveFieldFollowingMaxTime)
-	FieldFollowingGUI.Add("Text", "x15 y45", "Channel ID:")
-	FieldFollowingGUI.Add("Edit", "x80 y43 w200 h18 vFieldFollowingChannelID Disabled" (FieldFollowingCheck = 0), FieldFollowingChannelID).OnEvent("Change", aq_saveFieldFollowingChannelID)
-	FieldFollowingGUI.Show("w290 h62")
-}
-aq_FieldFollowingCheck(*){
-	global FieldFollowingCheck, FieldFollowingGUI
-	FieldFollowingCheck := FieldFollowingGUI["FieldFollowingCheck"].Value
-	IniWrite FieldFollowingCheck, "settings\nm_config.ini", "Extensions", "FieldFollowingCheck"
-	PostSubmacroMessage("Status", 0x5552, 361, FieldFollowingCheck)
-	FieldFollowingGUI["FieldFollowingFollowMode"].Enabled := FieldFollowingGUI["FieldFollowingMaxTime"].Enabled := FieldFollowingGUI["FieldFollowingChannelID"].Enabled := FieldFollowingCheck
-}
-aq_FieldFollowingHelp(*){
-	MsgBox "
-	(
-	DESCRIPTION:
-	When this option is enabled, the macro will automatically follow a leader account to whatever field they are gathering in if it is a follower account, or announce field changes to follower accounts if it is a leader account.
-	NOTE:
-	You must have a Discord bot setup in order for this feature to work properly. It is recommended to not use the same channel ID as the bot for this.
-
-	Follow Mode:
-	This option allows you to choose between being the a follower account that follows the leader account, or the leader account that follower accounts follow.
-
-	Max Time:
-	This is the maximum amount of time that the macro will follow the leader account before it returns to it's original gather field (in seconds). This is not relevant if the follow mode is leader.
-
-	Channel ID:
-	IF this account is a follower account: This is the channel ID that the account will listen to field changes in, make sure this is the same as the announcement channel of the leader account.
-	IF this account is a leader account: This is the channel ID that the account will announce field changes in, make sure this is the same as the listen channel of the follower account.
-
-	)", "Field Following", 0x40000
-}
-aq_FieldFollowingFollowModeSelect(GuiCtrl?, *){
-	global FieldFollowingFollowMode
-	if IsSet(GuiCtrl) {
-		FieldFollowingFollowMode := FieldFollowingGUI["FieldFollowingFollowMode"].Text
-		IniWrite FieldFollowingFollowMode, "settings\nm_config.ini", "Extensions", "FieldFollowingFollowMode"
-		PostSubmacroMessage("Status", 0x5553, 80, 10)
-	}
-}
-aq_saveFieldFollowingMaxTime(GuiCtrl, *){
-	global FieldFollowingMaxTime
-	p := EditGetCurrentCol(GuiCtrl)
-	NewFieldFollowingMaxTime := GuiCtrl.Value
-
-	if (NewFieldFollowingMaxTime ~= "^\d*$")
-	{
-		FieldFollowingMaxTime := NewFieldFollowingMaxTime
-		IniWrite FieldFollowingMaxTime, "settings\nm_config.ini", "Extensions", "FieldFollowingMaxTime"
-		PostSubmacroMessage("Status", 0x5553, 81, 10)
-	}
-	else
-	{
-		GuiCtrl.Value := FieldFollowingMaxTime
-		SendMessage 0xB1, p-2, p-2, GuiCtrl
-		nm_ShowErrorBalloonTip(GuiCtrl, "Invalid max follow time!", "Make sure it is a valid number (in seconds).")
-	}
-}
-aq_saveFieldFollowingChannelID(GuiCtrl, *){
-	global FieldFollowingChannelID
-	p := EditGetCurrentCol(GuiCtrl)
-	NewFieldFollowingChannelID := GuiCtrl.Value
-
-	if (NewFieldFollowingChannelID ~= "^\d*$")
-	{
-		FieldFollowingChannelID := NewFieldFollowingChannelID
-		IniWrite FieldFollowingChannelID, "settings\nm_config.ini", "Extensions", "FieldFollowingChannelID"
-		PostSubmacroMessage("Status", 0x5553, 82, 10)
-	}
-	else
-	{
-		GuiCtrl.Value := FieldFollowingChannelID
-		SendMessage 0xB1, p-2, p-2, GuiCtrl
-		nm_ShowErrorBalloonTip(GuiCtrl, "Invalid Discord Channel ID!", "Make sure it is a valid Channel ID.")
-	}
-}
 nm_ReportBugButton(*){
 	Run "https://github.com/NatroTeam/NatroMacro/issues/new?assignees=&labels=bug%2Cneeds+triage&projects=&template=bug.yml"
 }
@@ -10471,8 +10366,11 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 		MouseMove windowX+350, windowY+offsetY+100
 		PrevKeyDelay:=A_KeyDelay
 		SetKeyDelay 250+KeyDelay
-		Loop (VBState = 0) ? (1 + MultiReset + (GatherDoubleReset && (CheckAll=2))) : 1
-		{
+        ; New feature to detect multiple reset
+        resetCounterOuter:=0
+		Loop ((VBState = 0) && (resetCounterOuter < 2)) ? (1 + MultiReset + (GatherDoubleReset && (CheckAll=2))) : 1
+		{   
+            resetCounterOuter += 1
 			resetTime:=nowUnix()
 			PostSubmacroMessage("background", 0x5554, 1, resetTime)
 			;reset
@@ -10480,12 +10378,15 @@ nm_Reset(checkAll:=1, wait:=2000, convert:=1, force:=0){
 			GetRobloxClientPos()
 			send "{" SC_Esc "}{" SC_R "}{" SC_Enter "}"
 			n := 0
-			while ((n < 2) && (A_Index <= 80))
+            ; New feature to detect multiple reset
+            resetCounter:=0
+			while ((n < 2) && (A_Index <= 80)) && (resetCounter < 2)
 			{
 				Sleep 100
 				pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY "|" windowWidth "|50")
 				n += (Gdip_ImageSearch(pBMScreen, bitmaps["emptyhealth"], , , , , , 10) = (n = 0))
 				Gdip_DisposeImage(pBMScreen)
+                resetCounter += 1
 			}
 			Sleep 1000
 		}
@@ -15411,24 +15312,6 @@ nm_Mondo(){
 		IniWrite LastMondoBuff, "settings\nm_config.ini", "Collect", "LastMondoBuff"
 	}
 }
-aq_followToField(wParam, *){
-	global FollowingLeader, FollowingField, FollowingStartTime, index_field_map
-
-	if (index_field_map[wParam] = FieldName1) {
-		FollowingLeader := 0
-		return
-	}
-
-	FollowingLeader := 1
-	FollowingStartTime := nowUnix()
-	FollowingField := index_field_map[wParam]
-}
-aq_announceField(field){
-	global field_index_map, LastAnnouncedField
-	fieldarg := StrReplace(field, " ")
-	PostSubmacroMessage("Status", 0x5561, field_index_map[fieldarg])
-	LastAnnouncedField := field
-}
 nm_GoGather(){
 	global youDied, VBState
 		, TCFBKey, AFCFBKey, TCLRKey, AFCLRKey, FwdKey, LeftKey, BackKey, RightKey, RotLeft, RotRight, SC_E, KeyDelay
@@ -15452,7 +15335,6 @@ nm_GoGather(){
 		, GameFrozenCounter
 		, BlackQuestCheck, BrownQuestCheck, BuckoQuestCheck, RileyQuestCheck, PolarQuestCheck
 		, BlackQuestComplete, BrownQuestComplete, BuckoQuestComplete, RileyQuestComplete, PolarQuestComplete
-        , FollowingField, FollowingLeader, FollowingStartTime, FieldFollowingFollowMode, LastAnnouncedField, FieldFollowingCheck
 
 	;VICIOUS BEE
 	if (VBState = 1)
@@ -15656,27 +15538,6 @@ nm_GoGather(){
 				}
 			}
 		}
-        ;following override
-		if(FollowingLeader=1){
-			fieldOverrideReason:="Following"
-			FieldName:=FollowingField
-			FieldPattern:=FieldDefault[FollowingField]["pattern"]
-			FieldPatternSize:=FieldDefault[FollowingField]["size"]
-			FieldPatternReps:=FieldDefault[FollowingField]["width"]
-			FieldPatternShift:=FieldDefault[FollowingField]["shiftlock"]
-			FieldPatternInvertFB:=FieldDefault[FollowingField]["invertFB"]
-			FieldPatternInvertLR:=FieldDefault[FollowingField]["invertLR"]
-			FieldUntilMins:=FieldDefault[FollowingField]["gathertime"]
-			FieldUntilPack:=FieldDefault[FollowingField]["percent"]
-			FieldReturnType:=FieldDefault[FollowingField]["convert"]
-			FieldSprinklerLoc:=FieldDefault[FollowingField]["sprinkler"]
-			FieldSprinklerDist:=FieldDefault[FollowingField]["distance"]
-			FieldRotateDirection:=FieldDefault[FollowingField]["camera"]
-			FieldRotateTimes:=FieldDefault[FollowingField]["turns"]
-			FieldDriftCheck:=FieldDefault[FollowingField]["drift"]
-			break
-		}
-        
 		FieldName:=FieldName%CurrentFieldNum%
 		FieldPattern:=FieldPattern%CurrentFieldNum%
 		FieldPatternSize:=FieldPatternSize%CurrentFieldNum%
@@ -15693,11 +15554,6 @@ nm_GoGather(){
 		FieldRotateTimes:=FieldRotateTimes%CurrentFieldNum%
 		FieldDriftCheck:=FieldDriftCheck%CurrentFieldNum%
 	}
-
-	;gather field changed?
-	if (FieldFollowingCheck && FieldFollowingFollowMode="Leader" && LastAnnouncedField!=FieldName)
-		aq_announceField(FieldName)
-
 	nm_updateAction("Gather")
 	;close all menus
 	nm_OpenMenu()
@@ -15894,22 +15750,7 @@ nm_GoGather(){
 				}
 				;boost is over
 				if (fieldOverrideReason="Boost" && (nowUnix()-GatherFieldBoostedStart>900) && (nowUnix()-LastGlitter>900)) {
-					; gather field changed
-					if (FieldFollowingCheck && FieldFollowingFollowMode="Leader")
-						aq_announceField(FieldName)
-                    interruptReason := "Boost Over"
-					break
-				}
-                ;following leader
-				if (FollowingLeader=1 && FieldName!=FollowingField) {
-					interruptReason := "Following Leader"
-					break
-				}
-
-				;returning from followed field
-				if ((FollowingLeader=1 && nowUnix() - FollowingStartTime > FieldFollowingMaxTime && FieldName!=FieldName%CurrentFieldNum%) || (fieldOverrideReason="Following" && FollowingLeader=0)) {
-					FollowingLeader := 0
-					interruptReason := "Returning from followed field"
+					interruptReason := "Boost Over"
 					break
 				}
 				;mondo
